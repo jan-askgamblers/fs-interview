@@ -1,5 +1,23 @@
 version: '3'
 services:
+    php:
+        networks:
+            - sail
+        build:
+            context: ./.docker/php-fpm
+        user: "1000:1000"
+        volumes:
+            - ./.docker/php-fpm/php:/usr/local/etc/php:ro,cached
+            - .:/app:rw,cached
+            - ./var:/app/var:rw,delegated
+            - ./.composer:/var/www/.composer
+        expose:
+            - 9000
+        links:
+            - mysql
+#            - mailhog
+#        labels:
+#            - traefik.enable=false
     laravel.test:
         build:
             context: ./vendor/laravel/sail/runtimes/8.2
