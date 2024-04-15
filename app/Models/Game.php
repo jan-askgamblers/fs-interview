@@ -18,4 +18,17 @@ class Game extends Model
         'numberOfPlays',
         'market',
     ];
+
+    public function toCardData(): array
+    {
+        return [
+            'uuid' => uniqid(),
+            'name' => $this->name,
+            'url' => $this->link,
+            'image' => $this->screenshot,
+            'ordering' => $this->numberOfPlays,
+            'market' => $this->market,
+            'type' => 'game'
+        ];
+    }
 }
