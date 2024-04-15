@@ -1,3 +1,5 @@
+### Project Setup
+
 I do not have php installed on my system, I always use dockerized php in my projects. This way I can avoid conflicts
 between different projects and I can easily switch between different php versions. I started with adding a php 8.1 image
 to the project.
@@ -61,10 +63,40 @@ So this
 ```shell
 vendor/bin/sail mysql
 ```
-gives me a live promt, but `vendor/bin/sail artisan migrate` still gives me the same error.
+gives me a live prompt, but `vendor/bin/sail artisan migrate` still gives me the same error.
 
 Sometime later, I found out that I have to remove the existing volumes again, and recreate them with the following command:
 ```shell
 vendor/bin/sail down -v && vendor/bin/sail up -d
 ```
 After a fresh start, migration was successful. Finally!
+
+### Usage Notes
+
+Redis populator can be run with the following command:
+```shell
+vendor/bin/sail artisan app:redis:populate
+```
+It will create Sorted Sets for the Games and Casinos, as required. My chosen redis keys:
+- casinos-global : no market filtering, sorted by rank
+- casinos-[MARKET] : where [MARKET] is the value of the current market sorting group
+- games-global : no market filtering, sorted by number of plays
+- games-[MARKET] : where [MARKET] is the value of the current market sorting group
+
+#### Manually check if the command succeeded
+
+```shell
+vendor/bin/sail redis
+
+[select 0] # is optional, default db is 0 used by the laravel app
+
+keys * # shows all the available created keys for games, casinos in every market and their global versions
+keys *games* # show game keys only
+keys *casinos* # show casino keys only
+
+zrevragne laravel_database_casinos-global 0 -1 # show the global casino ranking
+zrevrange laravel_database_games-[MARKET] 0 -1 # show the games ranking for the chosen market
+```
+I've decided not to do any sorting in code, because Redis handles it well. I use the models `rank` or `numberOfPlays` 
+fields as the ranking index in the sorted sets. This way we will get ascending lists by default, but that is no problem,
+`zrevrange` reads them back backwards, so we get a descending list.
